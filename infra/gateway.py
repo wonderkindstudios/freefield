@@ -182,4 +182,4 @@ async def wait_for(url: str, timeout_s: float = 600) -> None:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
-    web.run_app(make_app(), host="0.0.0.0", port=int(os.environ.get("GATEWAY_PORT", "8000")))
+    web.run_app(make_app(), host=os.environ.get("GATEWAY_HOST", "0.0.0.0"), port=int(os.environ.get("GATEWAY_PORT", "8000")))

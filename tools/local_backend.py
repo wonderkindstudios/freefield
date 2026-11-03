@@ -172,7 +172,7 @@ def serve(comfy: Path, comfy_args: list[str], port: int) -> None:
                                        "--comfyui-base-dir", str(comfy)]))
         wait_port(8189, procs[-1])
         env = {**os.environ, "FREEFIELD_TOKEN": token, "COMFYUI_URL": "http://127.0.0.1:8188",
-               "PROXY_URL": "http://127.0.0.1:8189", "GATEWAY_PORT": str(port)}
+               "PROXY_URL": "http://127.0.0.1:8189", "GATEWAY_PORT": str(port), "GATEWAY_HOST": "127.0.0.1"}
         procs.append(subprocess.Popen([sys.executable, str(ROOT / "infra" / "gateway.py")], env=env))
         wait_http(f"http://127.0.0.1:{port}/health", procs[-1], 120)
         print(f"\nbackend ready: COMFY_BASE_URL=http://127.0.0.1:{port} in .env, then npm run serve (Ctrl+C stops all)",
