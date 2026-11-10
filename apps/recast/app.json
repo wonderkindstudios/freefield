@@ -11,7 +11,7 @@
   "source": {
     "template": "video_wan21_scail2_character_replacement_int8.json",
     "comfyui": "0.42.0",
-    "notes": "First segment only (81 frames): the template's extend subgraph needs 157+ frames and is removed."
+    "notes": "First segment only (81 frames): the template's extend subgraph needs 157+ frames and is removed. Width and height limited to SCAIL-2's two supported sizes, 512p (512×896) and 704p (704×1280)."
   },
   "inputs": [
     {
@@ -118,20 +118,16 @@
           "label": "512 px"
         },
         {
-          "value": 640,
-          "label": "640 px"
-        },
-        {
-          "value": 832,
-          "label": "832 px"
+          "value": 704,
+          "label": "704 px"
         },
         {
           "value": 896,
           "label": "896 px"
         },
         {
-          "value": 1024,
-          "label": "1024 px"
+          "value": 1280,
+          "label": "1280 px"
         }
       ],
       "bind": [
@@ -139,7 +135,8 @@
           "node": "213:178",
           "field": "value"
         }
-      ]
+      ],
+      "help": "SCAIL-2 supports 512p (512×896) and 704p (704×1280); replacing a person works better at 704p."
     },
     {
       "id": "height",
@@ -152,20 +149,16 @@
           "label": "512 px"
         },
         {
-          "value": 640,
-          "label": "640 px"
-        },
-        {
-          "value": 832,
-          "label": "832 px"
+          "value": 704,
+          "label": "704 px"
         },
         {
           "value": 896,
           "label": "896 px"
         },
         {
-          "value": 1024,
-          "label": "1024 px"
+          "value": 1280,
+          "label": "1280 px"
         }
       ],
       "bind": [
@@ -173,7 +166,8 @@
           "node": "213:179",
           "field": "value"
         }
-      ]
+      ],
+      "help": "SCAIL-2 supports 512p (512×896) and 704p (704×1280); replacing a person works better at 704p."
     },
     {
       "id": "seed",

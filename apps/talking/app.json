@@ -11,7 +11,7 @@
   "source": {
     "template": "ComfyUI-LTXVideo example_workflows/2.5/LTX-2.5_A2V_Two_Stage_Distilled.json (44c8a36)",
     "comfyui": "0.42.0",
-    "notes": "Gemma API text encoder removed (local encoding only), int8 weights, portrait conditioning always on. Not run yet."
+    "notes": "Gemma API text encoder removed (local encoding only), int8 weights, portrait conditioning always on. Not run yet. Resolution defaults to 1280×704, the size the talking-head LoRA was trained at (its model card); 1920×1088 was the only size before."
   },
   "inputs": [
     {
@@ -101,6 +101,48 @@
           "field": "value"
         }
       ]
+    },
+    {
+      "id": "size",
+      "type": "select",
+      "label": "Resolution",
+      "default": "1280x704",
+      "help": "The talking-head LoRA was trained at 1280×704. The clip is made at half this size and doubled by the latent upscaler.",
+      "options": [
+        {
+          "value": "1280x704",
+          "label": "1280×704 (trained size)",
+          "sets": [
+            {
+              "node": "5514:3059",
+              "field": "width",
+              "value": 640
+            },
+            {
+              "node": "5514:3059",
+              "field": "height",
+              "value": 352
+            }
+          ]
+        },
+        {
+          "value": "1920x1088",
+          "label": "1920×1088 (above the trained size)",
+          "sets": [
+            {
+              "node": "5514:3059",
+              "field": "width",
+              "value": 960
+            },
+            {
+              "node": "5514:3059",
+              "field": "height",
+              "value": 544
+            }
+          ]
+        }
+      ],
+      "bind": []
     },
     {
       "id": "enhance",

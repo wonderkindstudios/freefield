@@ -153,6 +153,38 @@ def h3_extend(api: Api) -> None:
     put(api, out, "fps", ["ff_parts", 2])
 
 
+def reshoot_two_pass(api: Api) -> None:
+    """The refinement pass of the LoRA author's own workflow (Cseti/ComfyUI-Workflows, minimax-h3/crossview-warp):
+    the first pass (0.5 MP, the size the released examples start from) is scaled to 1.5 MP, encoded with its
+    sound, and sampled again for 10 steps at 0.3 denoise with the clip as the only reference and no warp guide.
+    Core nodes stand in for the KJNodes resize; BlockSparseAttention (a speed-up) is left out. Two lazy switches
+    (ff_r_pick, ff_r_frames; off by default) hand the second pass to the save nodes, so it only runs when asked."""
+    api["ff_r_scale"] = {"class_type": "ImageScaleToTotalPixels", "_meta": {"title": "First pass to 1.5 MP"},
+                         "inputs": {"image": ["35", 0], "upscale_method": "lanczos", "megapixels": 1.5, "resolution_steps": 32}}
+    api["ff_r_size"] = {"class_type": "GetImageSize", "inputs": {"image": ["ff_r_scale", 0]}}
+    api["ff_r_venc"] = {"class_type": "VAEEncode", "inputs": {"pixels": ["ff_r_scale", 0], "vae": ["16", 0]}}
+    api["ff_r_aenc"] = {"class_type": "VAEEncodeAudio", "inputs": {"audio": ["36", 0], "vae": ["17", 0]}}
+    api["ff_r_latent"] = {"class_type": "LTXVConcatAVLatent", "inputs": {"video_latent": ["ff_r_venc", 0], "audio_latent": ["ff_r_aenc", 0]}}
+    api["ff_r_cond"] = {"class_type": "MiniMaxH3ReferenceToVideo", "_meta": {"title": "Second pass: source as <Video 1> reference"},
+                        "inputs": {"clip": ["15", 0], "vae": ["16", 0], "ref_videos.ref_video_0": ["2", 0], "prompt": "crossview.",
+                                   "width": ["ff_r_size", 0], "height": ["ff_r_size", 1], "length": ["2", 3], "ref_image_size": "match"}}
+    api["ff_r_noise"] = {"class_type": "RandomNoise", "_meta": {"title": "Seed (second pass)"}, "inputs": {"noise_seed": 42}}
+    api["ff_r_sigmas"] = {"class_type": "BasicScheduler", "inputs": {"model": ["14", 0], "scheduler": "simple", "steps": 10, "denoise": 0.3}}
+    api["ff_r_guider"] = {"class_type": "BasicGuider", "inputs": {"model": ["14", 0], "conditioning": ["ff_r_cond", 0]}}
+    api["ff_r_sample"] = {"class_type": "SamplerCustomAdvanced",
+                          "inputs": {"noise": ["ff_r_noise", 0], "guider": ["ff_r_guider", 0], "sampler": ["31", 0], "sigmas": ["ff_r_sigmas", 0],
+                                     "latent_image": ["ff_r_latent", 0]}}
+    api["ff_r_decode"] = {"class_type": "VAEDecode", "inputs": {"samples": ["ff_r_sample", 0], "vae": ["16", 0]}}
+    api["ff_r_audio"] = {"class_type": "VAEDecodeAudio", "inputs": {"samples": ["ff_r_sample", 0], "vae": ["17", 0]}}
+    api["ff_r_video"] = {"class_type": "CreateVideo", "inputs": {"images": ["ff_r_decode", 0], "audio": ["ff_r_audio", 0], "fps": 24.0}}
+    api["ff_r_pick"] = {"class_type": "ComfySwitchNode", "_meta": {"title": "Second pass? (result)"},
+                        "inputs": {"switch": False, "on_false": ["37", 0], "on_true": ["ff_r_video", 0]}}
+    api["ff_r_frames"] = {"class_type": "ComfySwitchNode", "_meta": {"title": "Second pass? (frames for the original-audio result)"},
+                          "inputs": {"switch": False, "on_false": ["35", 0], "on_true": ["ff_r_decode", 0]}}
+    api["38"]["inputs"]["video"] = ["ff_r_pick", 0]
+    api["42"]["inputs"]["images"] = ["ff_r_frames", 0]
+
+
 def video_remove_bg(birefnet: Api) -> Api:
     """BiRefNet (the remove-bg template's two nodes) on every frame of a clip, from core video nodes: the cutout
     over a solid color with the clip's sound, and the matte (white subject on black) for compositing."""
@@ -799,6 +831,7 @@ def recipes(templates: Path, ltx: Path, info: dict, reshoot: Path | None = None)
     if reshoot:
         # Comfy's own reference app (Comfy-Org/comfy-reshoot, MIT), already in API format
         out["reshoot"] = json.loads((reshoot / "generate.api.json").read_text(encoding="utf-8"))
+        reshoot_two_pass(out["reshoot"])
     for app_id, api in out.items():
         prefix_outputs(api, app_id)
         for n in [i for i, node in api.items() if node["class_type"] == "PreviewAny"]:

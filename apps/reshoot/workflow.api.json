@@ -355,7 +355,7 @@
     },
     "inputs": {
       "video": [
-        "37",
+        "ff_r_pick",
         0
       ],
       "filename_prefix": "freefield/reshoot",
@@ -395,7 +395,7 @@
     },
     "inputs": {
       "images": [
-        "35",
+        "ff_r_frames",
         0
       ],
       "audio": [
@@ -418,6 +418,236 @@
       "filename_prefix": "freefield/reshoot",
       "format": "mp4",
       "format.codec": "h264"
+    }
+  },
+  "ff_r_scale": {
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "First pass to 1.5 MP"
+    },
+    "inputs": {
+      "image": [
+        "35",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1.5,
+      "resolution_steps": 32
+    }
+  },
+  "ff_r_size": {
+    "class_type": "GetImageSize",
+    "inputs": {
+      "image": [
+        "ff_r_scale",
+        0
+      ]
+    }
+  },
+  "ff_r_venc": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "ff_r_scale",
+        0
+      ],
+      "vae": [
+        "16",
+        0
+      ]
+    }
+  },
+  "ff_r_aenc": {
+    "class_type": "VAEEncodeAudio",
+    "inputs": {
+      "audio": [
+        "36",
+        0
+      ],
+      "vae": [
+        "17",
+        0
+      ]
+    }
+  },
+  "ff_r_latent": {
+    "class_type": "LTXVConcatAVLatent",
+    "inputs": {
+      "video_latent": [
+        "ff_r_venc",
+        0
+      ],
+      "audio_latent": [
+        "ff_r_aenc",
+        0
+      ]
+    }
+  },
+  "ff_r_cond": {
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "_meta": {
+      "title": "Second pass: source as <Video 1> reference"
+    },
+    "inputs": {
+      "clip": [
+        "15",
+        0
+      ],
+      "vae": [
+        "16",
+        0
+      ],
+      "ref_videos.ref_video_0": [
+        "2",
+        0
+      ],
+      "prompt": "crossview.",
+      "width": [
+        "ff_r_size",
+        0
+      ],
+      "height": [
+        "ff_r_size",
+        1
+      ],
+      "length": [
+        "2",
+        3
+      ],
+      "ref_image_size": "match"
+    }
+  },
+  "ff_r_noise": {
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "Seed (second pass)"
+    },
+    "inputs": {
+      "noise_seed": 42
+    }
+  },
+  "ff_r_sigmas": {
+    "class_type": "BasicScheduler",
+    "inputs": {
+      "model": [
+        "14",
+        0
+      ],
+      "scheduler": "simple",
+      "steps": 10,
+      "denoise": 0.3
+    }
+  },
+  "ff_r_guider": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": [
+        "14",
+        0
+      ],
+      "conditioning": [
+        "ff_r_cond",
+        0
+      ]
+    }
+  },
+  "ff_r_sample": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "ff_r_noise",
+        0
+      ],
+      "guider": [
+        "ff_r_guider",
+        0
+      ],
+      "sampler": [
+        "31",
+        0
+      ],
+      "sigmas": [
+        "ff_r_sigmas",
+        0
+      ],
+      "latent_image": [
+        "ff_r_latent",
+        0
+      ]
+    }
+  },
+  "ff_r_decode": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "ff_r_sample",
+        0
+      ],
+      "vae": [
+        "16",
+        0
+      ]
+    }
+  },
+  "ff_r_audio": {
+    "class_type": "VAEDecodeAudio",
+    "inputs": {
+      "samples": [
+        "ff_r_sample",
+        0
+      ],
+      "vae": [
+        "17",
+        0
+      ]
+    }
+  },
+  "ff_r_video": {
+    "class_type": "CreateVideo",
+    "inputs": {
+      "images": [
+        "ff_r_decode",
+        0
+      ],
+      "audio": [
+        "ff_r_audio",
+        0
+      ],
+      "fps": 24.0
+    }
+  },
+  "ff_r_pick": {
+    "class_type": "ComfySwitchNode",
+    "_meta": {
+      "title": "Second pass? (result)"
+    },
+    "inputs": {
+      "switch": false,
+      "on_false": [
+        "37",
+        0
+      ],
+      "on_true": [
+        "ff_r_video",
+        0
+      ]
+    }
+  },
+  "ff_r_frames": {
+    "class_type": "ComfySwitchNode",
+    "_meta": {
+      "title": "Second pass? (frames for the original-audio result)"
+    },
+    "inputs": {
+      "switch": false,
+      "on_false": [
+        "35",
+        0
+      ],
+      "on_true": [
+        "ff_r_decode",
+        0
+      ]
     }
   }
 }

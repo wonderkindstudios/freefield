@@ -11,7 +11,7 @@
   "source": {
     "template": "Comfy-Org/comfy-reshoot workflows/generate.api.json (dc53fc7)",
     "comfyui": "0.42.0",
-    "notes": "Comfy's own reference app, shown on a 96 GB GPU. Runs on a 48 GB L40S in Modal: 196.2 s (20261020-133620-l40s) and 222.9 s (20261024-035222-l40s) for a 4 s clip, peak 44.2 GB (the text encoder alone is 27.1 GB). The second output, \"Warp guide\", is the clip reprojected to the new angle with its holes in magenta: what MiniMax H3 fills in."
+    "notes": "Comfy's own reference app, shown on a 96 GB GPU. Runs on a 48 GB L40S in Modal: 196.2 s (20261020-133620-l40s) and 222.9 s (20261024-035222-l40s) for a 4 s clip, peak 44.2 GB (the text encoder alone is 27.1 GB). The second output, \"Warp guide\", is the clip reprojected to the new angle with its holes in magenta: what MiniMax H3 fills in. The first pass is fixed at 0.5 MP (the CrossView-Warp LoRA was trained at 512×512 × 73 frames; its examples start at 0.5 MP). \"Refine\" switches in the second pass of the LoRA author's workflow (Cseti/ComfyUI-Workflows, minimax-h3/crossview-warp): 1.5 MP, 10 steps, 0.3 denoise, rebuilt from core nodes by tools/build_apps.py (reshoot_two_pass)."
   },
   "inputs": [
     {
@@ -31,7 +31,8 @@
           "node": "1",
           "field": "file"
         }
-      ]
+      ],
+      "help": "5 to 15 seconds, one clear subject near the middle of the frame, an uncluttered scene. 16:9 matches the LoRA's examples."
     },
     {
       "id": "azimuth",
@@ -46,14 +47,15 @@
           "node": "5",
           "field": "azimuth"
         }
-      ]
+      ],
+      "help": "Most reliable within 45 degrees either way; the training set reaches 90. Avoid 0 with Height at 0: the LoRA misbehaves when the new view is nearly the source."
     },
     {
       "id": "elevation",
       "type": "slider",
       "label": "Height (degrees)",
-      "min": -30,
-      "max": 60,
+      "min": -35,
+      "max": 45,
       "step": 5,
       "default": 20,
       "bind": [
@@ -61,7 +63,8 @@
           "node": "5",
           "field": "elevation"
         }
-      ]
+      ],
+      "help": "Most reliable from -20 to 30; the training set covers -35 to 45."
     },
     {
       "id": "distance",
@@ -76,36 +79,23 @@
           "node": "5",
           "field": "distance"
         }
-      ]
+      ],
+      "help": "Leave at 1 unless you are experimenting: the node's author says distance is not followed reliably."
     },
     {
-      "id": "megapixels",
-      "type": "select",
-      "label": "Resolution",
-      "default": 0.5,
-      "help": "The clip is scaled to this size before the camera moves. Larger sizes take longer.",
-      "options": [
-        {
-          "value": 0.5,
-          "label": "0.5 MP"
-        },
-        {
-          "value": 0.9,
-          "label": "0.9 MP (about 720p)"
-        },
-        {
-          "value": 1.5,
-          "label": "1.5 MP"
-        },
-        {
-          "value": 2,
-          "label": "2 MP (about 1080p, slow)"
-        }
-      ],
+      "id": "refine",
+      "type": "toggle",
+      "label": "Refine to 1.5 MP (second pass)",
+      "default": false,
+      "help": "Off: one pass at 0.5 MP, the size the LoRA's examples start from. On: the LoRA author's second pass scales that result to 1.5 MP and refines it (10 steps at 0.3 denoise); slower.",
       "bind": [
         {
-          "node": "2",
-          "field": "megapixels"
+          "node": "ff_r_pick",
+          "field": "switch"
+        },
+        {
+          "node": "ff_r_frames",
+          "field": "switch"
         }
       ]
     },
@@ -113,7 +103,7 @@
       "id": "duration",
       "type": "slider",
       "label": "Seconds to keep",
-      "min": 2,
+      "min": 3,
       "max": 10,
       "step": 1,
       "default": 5,
@@ -122,7 +112,8 @@
           "node": "2",
           "field": "duration"
         }
-      ]
+      ],
+      "help": "Snapped to a frame count the model accepts. The LoRA was trained on 3-second clips (73 frames); its examples use 5 seconds (124 frames)."
     },
     {
       "id": "prompt",
@@ -134,8 +125,14 @@
           "node": "20",
           "field": "prompt",
           "template": "crossview. {prompt}"
+        },
+        {
+          "node": "ff_r_cond",
+          "field": "prompt",
+          "template": "crossview. {prompt}"
         }
-      ]
+      ],
+      "help": "The trigger word is added for you. Describe what should appear in the areas the original camera never saw (magenta in the Warp guide)."
     },
     {
       "id": "seed",
@@ -146,6 +143,10 @@
       "bind": [
         {
           "node": "30",
+          "field": "noise_seed"
+        },
+        {
+          "node": "ff_r_noise",
           "field": "noise_seed"
         }
       ]
