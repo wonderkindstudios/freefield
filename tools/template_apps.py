@@ -52,7 +52,7 @@ BASES = {
     "z-image": {"app": "z-image", "section": "image", "pack": "image", "image": None, "prompt": ("57:27", "text"), "keep": ("width", "height", "steps", "seed"),
                 "output": {"node": "9", "type": "image"}},
     "video": {"app": "video", "section": "video", "pack": "video-ltx25", "image": ("395", "image"), "prompt": ("398:376", "value"),
-              "keep": ("duration", "enhance", "aspect", "seed"), "output": {"node": "75", "type": "video"}},
+              "keep": ("duration", "enhance", "aspect", "megapixels", "seed"), "output": {"node": "75", "type": "video"}},
     "qwen-edit": {"app": "relight", "section": "image", "pack": "image-qwen-edit", "image": ("11", "image"), "prompt": ("15", "value"), "keep": ("seed",),
                   "output": {"node": "12", "type": "image"}},
     "morph": {"app": "morph", "section": "video", "pack": "video-ltx25", "image": ("31", "image"), "prompt": ("251:252", "value"), "klein": ("edit:4", "text"),
@@ -719,7 +719,7 @@ def check() -> None:
         assert used <= have, (t["id"], used - have)
         assert have - setters <= used, (t["id"], have - setters - used)
         for i in t["inputs"]:
-            assert i["id"] not in ("image", "image2", "details", "steps", "seed", "width", "height", "duration", "enhance", "aspect", "resolution"), (t["id"], i["id"])
+            assert i["id"] not in ("image", "image2", "details", "steps", "seed", "width", "height", "duration", "enhance", "aspect", "megapixels", "resolution"), (t["id"], i["id"])
         if t["base"] in ("z-image", "klein"):
             assert t["ref"] is None and t["image_label"] is None
         else:

@@ -149,6 +149,37 @@
       ]
     },
     {
+      "id": "megapixels",
+      "type": "select",
+      "label": "Resolution",
+      "default": 0.9,
+      "help": "Size of the finished video in this shape. More megapixels take longer and need more VRAM, especially for long clips.",
+      "options": [
+        {
+          "value": 0.5,
+          "label": "0.5 MP (fast draft)"
+        },
+        {
+          "value": 0.9,
+          "label": "0.9 MP (about 720p)"
+        },
+        {
+          "value": 1.5,
+          "label": "1.5 MP"
+        },
+        {
+          "value": 2,
+          "label": "2 MP (about 1080p, slow)"
+        }
+      ],
+      "bind": [
+        {
+          "node": "403",
+          "field": "megapixels"
+        }
+      ]
+    },
+    {
       "id": "seed",
       "type": "seed",
       "label": "Seed",
