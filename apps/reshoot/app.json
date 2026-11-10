@@ -79,6 +79,37 @@
       ]
     },
     {
+      "id": "megapixels",
+      "type": "select",
+      "label": "Resolution",
+      "default": 0.5,
+      "help": "The clip is scaled to this size before the camera moves. Larger sizes take longer.",
+      "options": [
+        {
+          "value": 0.5,
+          "label": "0.5 MP"
+        },
+        {
+          "value": 0.9,
+          "label": "0.9 MP (about 720p)"
+        },
+        {
+          "value": 1.5,
+          "label": "1.5 MP"
+        },
+        {
+          "value": 2,
+          "label": "2 MP (about 1080p, slow)"
+        }
+      ],
+      "bind": [
+        {
+          "node": "2",
+          "field": "megapixels"
+        }
+      ]
+    },
+    {
       "id": "duration",
       "type": "slider",
       "label": "Seconds to keep",
