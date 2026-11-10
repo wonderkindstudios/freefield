@@ -491,6 +491,14 @@
         {
           "value": 2,
           "label": "2K"
+        },
+        {
+          "value": 3,
+          "label": "3K"
+        },
+        {
+          "value": 4,
+          "label": "4K"
         }
       ],
       "bind": [
